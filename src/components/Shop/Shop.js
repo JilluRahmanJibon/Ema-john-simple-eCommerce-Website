@@ -1,48 +1,66 @@
-import { faArrowRightLong, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
-import Product from '../Product/Product';
+import React, { useEffect, useState } from "react";
+import { addToDb, getStoredCard } from "../../utilities/fakedb";
+import Cart from "../Cart/Cart";
+import Product from "../Product/Product";
 
-import './Shop.css';
+import "./Shop.css";
 const Shop = () => {
-    const [products, setProducts] = useState([]);
-    const asyncWayDataLoad = async () => {
-        const url = 'products.json';
-        const res = await fetch(url);
-        const data = await res.json();
-        setProducts(data)
-    }
-    useEffect(() => {
-        asyncWayDataLoad()
-    }, [])
+	const [products, setProducts] = useState([]);
+	const asyncWayDataLoad = async () => {
+		const url = "products.json";
+		const res = await fetch(url);
+		const data = await res.json();
+		setProducts(data);
+	};
+	useEffect(() => {
+		asyncWayDataLoad();
+	}, []);
 
-    const [cart, setCart] = useState([]);
-    const addToCart = (product) => {
-        const newCart = [...cart, product]
-        setCart(newCart)
-    }
-    return (
-        <div className="shop-container">
-            <div className="products-container">
-                {
-                    products.map(product => <Product addToCart={addToCart} key={product.id} product={product}></Product>)
-                }
-            </div>
-            <div className="cart-container">
-                <h2 className='order-summay'>Product Summary</h2>
-                <p>Selected Items: {cart.length}</p>
-                <p>Total Price: ${ }</p>
-                <p>Total Shipping Charge: $</p>
-                <p>Tax: $</p>
-                <h4>Grand Total: $</h4>
-                <div className='clear-review-btn'>
-                    <button className='clear-cart'><p>Clear Cart <FontAwesomeIcon className='icon-clear-or-revie' icon={faTrashCan}></FontAwesomeIcon> </p></button>
-                    <button className='review-order'><p>Review Order <FontAwesomeIcon className='icon-clear-or-revie' icon={faArrowRightLong}></FontAwesomeIcon></p></button>
-                </div>
-            </div>
+	useEffect(() => {
+		const storedCart = getStoredCard();
+		const saveCart = [];
+		for (const id in storedCart) {
+			const findProduct = products.find(product => product.id === id);
+			if (findProduct) {
+				const quantity = storedCart[id];
+				findProduct.quantity = quantity;
+				saveCart.push(findProduct);
+				console.log(findProduct);
+			}
+		}
+		setCart(saveCart);
+	}, [products]);
 
-        </div>
-    );
+	const [cart, setCart] = useState([]);
+	const addToCart = selectProduct => {
+		let newCart = [];
+		const exist = cart.find(product => product.id === selectProduct.id);
+		if (!exist) {
+			selectProduct.quantity = 1;
+			newCart = [...cart, selectProduct];
+		} else {
+			const rest = cart.filter(product => product.id !== selectProduct.id);
+			exist.quantity = exist.quantity + 1;
+			newCart = [...rest, exist];
+		}
+		setCart(newCart);
+		addToDb(selectProduct.id);
+	};
+	return (
+		<div className="shop-container">
+			<div className="products-container">
+				{products.map(product => (
+					<Product
+						addToCart={addToCart}
+						key={product.id}
+						product={product}></Product>
+				))}
+			</div>
+			<div className="cart-container">
+				<Cart cart={cart}></Cart>
+			</div>
+		</div>
+	);
 };
 
 export default Shop;
