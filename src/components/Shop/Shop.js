@@ -1,20 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { addToDb, getStoredCard } from "../../utilities/fakedb";
+import { useLoaderData } from "react-router-dom";
+import {
+	addToDb,
+	deleteShoppingCart,
+	getStoredCard,
+} from "../../utilities/fakedb";
 import Cart from "../Cart/Cart";
 import Product from "../Product/Product";
 
 import "./Shop.css";
 const Shop = () => {
-	const [products, setProducts] = useState([]);
-	const asyncWayDataLoad = async () => {
-		const url = "products.json";
-		const res = await fetch(url);
-		const data = await res.json();
-		setProducts(data);
+	const [cart, setCart] = useState([]);
+	const products = useLoaderData();
+	// const asyncWayDataLoad = async () => {
+	// 	const url = "products.json";
+	// 	const res = await fetch(url);
+	// 	const data = await res.json();
+	// 	setProducts(data);
+	// };
+	// useEffect(() => {
+	// 	asyncWayDataLoad();
+	// }, []);
+	const clearCart = () => {
+		setCart([]);
+		deleteShoppingCart();
 	};
-	useEffect(() => {
-		asyncWayDataLoad();
-	}, []);
 
 	useEffect(() => {
 		const storedCart = getStoredCard();
@@ -25,13 +35,12 @@ const Shop = () => {
 				const quantity = storedCart[id];
 				findProduct.quantity = quantity;
 				saveCart.push(findProduct);
-				console.log(findProduct);
+				// console.log(findProduct);
 			}
 		}
 		setCart(saveCart);
 	}, [products]);
 
-	const [cart, setCart] = useState([]);
 	const addToCart = selectProduct => {
 		let newCart = [];
 		const exist = cart.find(product => product.id === selectProduct.id);
@@ -57,7 +66,7 @@ const Shop = () => {
 				))}
 			</div>
 			<div className="cart-container">
-				<Cart cart={cart}></Cart>
+				<Cart clearCart={clearCart} cart={cart}></Cart>
 			</div>
 		</div>
 	);
